@@ -1,0 +1,71 @@
+# === .NET ===
+bin/
+obj/
+out/
+*.log
+*.user
+*.suo
+*.userosscache
+*.userprefs
+*.dbmdl
+*.dbproj.schemaview
+*.pdb
+*.tmp
+*.cache
+*.config
+*.vspscc
+*.vssscc
+*.vshost.*
+*.sln.docstates
+
+# === Build artifacts ===
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# === Visual Studio / VSCode ===
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === Docker ===
+.docker/
+docker-compose.override.yml
+*.env
+docker/.env
+docker/*.env
+**/docker-data/
+**/docker-volume/
+**/volumes/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Test results ===
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+# === Package managers ===
+# NuGet
+*.nupkg
+# npm/yarn (por si agregás frontend o tooling JS)
+node_modules/
+package-lock.json
+yarn.lock
+
+# === Publish / deploy ===
+wwwroot/
+dist/
+publish/
+*.Publish.xml
+
+# === Secrets ===
+appsettings.Development.json
+.env
+docker/env.example
