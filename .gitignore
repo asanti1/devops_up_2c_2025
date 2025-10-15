@@ -1,6 +1,4 @@
 # === .NET ===
-bin/
-obj/
 out/
 *.log
 *.user
@@ -39,6 +37,8 @@ docker/*.env
 **/docker-data/
 **/docker-volume/
 **/volumes/
+**/bin/
+**/obj/
 
 # === OS ===
 .DS_Store
@@ -64,7 +64,7 @@ wwwroot/
 dist/
 publish/
 *.Publish.xml
-
+data/postgres
 # === Secrets ===
 appsettings.Development.json
 .env

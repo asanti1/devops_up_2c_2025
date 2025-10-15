@@ -1,0 +1,7 @@
+data/
+**/bin/
+**/obj/
+.git/
+.gitignore
+.vscode/
+.idea/
