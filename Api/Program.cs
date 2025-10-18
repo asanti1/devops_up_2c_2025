@@ -1,4 +1,5 @@
-using Microsoft.OpenApi.Models;
+using Api.DAL;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,22 +8,26 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<NotesContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 
 var app = builder.Build();
 
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var db = scope.ServiceProvider.GetRequiredService<NotesContext>();
+    db.Database.Migrate();
 }
-else
+
+
+app.MapGet("/notas", async (NotesContext db) => await db.Notes.ToListAsync());
+app.MapPost("/notas", async (NotesContext db, Note n) =>
 {
-    app.UseHsts();
-    app.UseHttpsRedirection();
-}
+    db.Notes.Add(n);
+    await db.SaveChangesAsync();
+    return Results.Created($"/notas/{n.Id}", n);
+});
 
 app.UseAuthorization();
 
