@@ -1,12 +1,13 @@
 using Api.DAL.DataSeed;
+using Api.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.DAL;
 
-public class NotesContext : DbContext
+public class NoteContext : DbContext
 {
 
-    public NotesContext(DbContextOptions<NotesContext> options) : base(options)
+    public NoteContext(DbContextOptions<NoteContext> options) : base(options)
     {
     }
 
@@ -14,6 +15,6 @@ public class NotesContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new NotesSeed());
+        modelBuilder.ApplyConfiguration(new NoteSeed());
     }
 }

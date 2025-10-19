@@ -1,36 +1,46 @@
 using Api.DAL;
+using Api.DAL.Repository;
+using Api.Mapping;
+using Api.Mapping.Interface;
+using Api.Service;
+using Api.Service.Interface;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<NotesContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddDbContext<NoteContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddHealthChecks().AddDbContextCheck<NoteContext>("db");;
+
+builder.Services.AddScoped<INoteMapper, NoteMappers>();
+builder.Services.AddScoped<INoteService, NoteService>();
+builder.Services.AddScoped<INoteRepository, NoteRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>(
+    x => new UnitOfWork(
+        x.GetRequiredService<NoteContext>(),
+        x.GetRequiredService<INoteRepository>()
+        ));
 
 
 var app = builder.Build();
 
+app.MapHealthChecks("/health");
 
-using (var scope = app.Services.CreateScope())
+if (args.Contains("--migrate-only"))
 {
-    var db = scope.ServiceProvider.GetRequiredService<NotesContext>();
-    db.Database.Migrate();
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<NoteContext>();
+    await db.Database.MigrateAsync();
+    return;
 }
 
-
-app.MapGet("/notas", async (NotesContext db) => await db.Notes.ToListAsync());
-app.MapPost("/notas", async (NotesContext db, Note n) =>
-{
-    db.Notes.Add(n);
-    await db.SaveChangesAsync();
-    return Results.Created($"/notas/{n.Id}", n);
-});
 
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapOpenApi();
 
 app.Run();

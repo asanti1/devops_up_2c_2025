@@ -1,4 +1,4 @@
-namespace Api.DAL;
+namespace Api.DAL.Models;
 public class Note
 {
     public int Id { get; set; }

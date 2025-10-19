@@ -1,46 +1,76 @@
+using Api.DTO;
+using Api.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
 
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class NoteController : ControllerBase
     {
-        private static List<string> _data = new List<string>() {
-        "A", "B", "C"
-    };
-        [HttpGet]
-        public ActionResult<List<string>> GetTasks()
+        private readonly INoteService _noteService;
+
+        public NoteController(INoteService noteService)
         {
-            return Ok(_data);
+            _noteService = noteService;
         }
 
-        [HttpGet("GetTaskById")]
-        public ActionResult<string> GetTaskById([FromQuery] int id)
+        [HttpGet]
+        public async Task<ActionResult<List<NoteResponseDTO>>> GetNotes()
         {
-            string val = _data[id];
-            return Ok(val);
+            List<NoteResponseDTO> noteResponses = await _noteService.GetAllNotes();
+            return Ok(noteResponses);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<NoteResponseDTO>> GetNoteById([FromRoute] int id)
+        {
+            try
+            {
+                NoteResponseDTO note = await _noteService.GetNoteById(id);
+                return Ok(note);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost]
-        public ActionResult AddTask([FromBody] string value)
+        public async Task<ActionResult<NoteResponseDTO>> AddNote([FromBody] NoteAddRequestDTO noteAddDTO)
         {
-            _data.Add(value);
-            return Created();
+            NoteResponseDTO n = await _noteService.AddNote(noteAddDTO);
+            return Created(String.Empty, n);
         }
 
         [HttpPut]
-        public ActionResult UpdateTask([FromBody] string id, string newValue)
+        public async Task<ActionResult<NoteResponseDTO>> UpdateNote([FromBody] NoteUpdateRequestDTO updateRequestDTO)
         {
-            return Ok();
+            try
+            {
+                NoteResponseDTO note = await _noteService.Update(updateRequestDTO);
+                return Ok(note);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
         }
 
-        [HttpDelete]
-        public ActionResult DeleteTask([FromBody] string id)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteNote([FromRoute] int id)
         {
-            _data.Remove(id);
-            return NoContent();
+            try
+            {
+                await _noteService.BorrarNote(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+
         }
     }
 }
