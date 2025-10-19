@@ -1,9 +1,10 @@
+using Api.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Api.DAL.DataSeed;
 
-public class NotesSeed : IEntityTypeConfiguration<Note>
+public class NoteSeed : IEntityTypeConfiguration<Note>
 {
     public void Configure(EntityTypeBuilder<Note> builder)
     {
