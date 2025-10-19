@@ -8,8 +8,8 @@ namespace Api.Mapping
     {
         public Note ToEntity(NoteAddRequestDTO dto) => new Note
         {
-            Titulo = dto.Titulo,
-            Contenido = dto.Contenido
+            Titulo = dto.Titulo?.Trim() ?? string.Empty,
+            Contenido = string.IsNullOrWhiteSpace(dto.Contenido) ? null : dto.Contenido.Trim()
         };
 
         public NoteResponseDTO ToResponse(Note note) => new NoteResponseDTO

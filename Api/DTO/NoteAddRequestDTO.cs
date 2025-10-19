@@ -2,8 +2,8 @@ namespace Api.DTO
 {
     public class NoteAddRequestDTO
     {
-    public string Titulo { get; set; }
-    public string Contenido { get; set; }
+    public required string Titulo { get; set; }
+    public required string Contenido { get; set; }
 
     }
 }

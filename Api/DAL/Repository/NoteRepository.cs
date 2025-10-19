@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api.DAL.Repository;
 
-class NoteRepository : Repository<Note>, INoteRepository
+public class NoteRepository : Repository<Note>, INoteRepository
 {
     public NoteRepository(NoteContext context) : base(context)
     {
