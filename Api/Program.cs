@@ -6,7 +6,6 @@ using Api.Service;
 using Api.Service.Interface;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,11 +16,6 @@ builder.Services.AddDbContext<NoteContext>(opt => opt.UseNpgsql(builder.Configur
 
 
 builder.Services.AddHealthChecks().AddDbContextCheck<NoteContext>("db"); ;
-
-builder.Services.AddHealthChecks()
-    .AddCheck("self", () => HealthCheckResult.Healthy())
-    .AddDbContextCheck<NoteContext>("db-context");
-
 
 
 builder.Services.AddScoped<INoteMapper, NoteMappers>();
@@ -36,11 +30,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>(
 
 var app = builder.Build();
 
-app.MapHealthChecks("/health-db");
+app.MapHealthChecks("/health");
 
-app.MapHealthChecks("/health", new HealthCheckOptions {
-    Predicate = r => r.Name == "self"
-});
 
 
 if (args.Contains("--migrate-only"))
