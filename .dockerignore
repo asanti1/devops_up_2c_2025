@@ -5,3 +5,13 @@ data/
 .gitignore
 .vscode/
 .idea/
+bin/
+obj/
+.vscode/
+.git/
+.gitignore
+**/*.user
+**/*.suo
+**/*.Secrets
+Dockerfile
+docker-compose.override.yml

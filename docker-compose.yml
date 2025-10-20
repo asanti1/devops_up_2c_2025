@@ -6,12 +6,11 @@ services:
       POSTGRES_DB: notasdb
       POSTGRES_USER: notasuser
       POSTGRES_PASSWORD: notassecret
-    ports:
-      - "5432:5432"
+    ports: ["5432:5432"]
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U notasuser -d notasdb" ]
+      test: ["CMD-SHELL", "pg_isready -U notasuser -d notasdb"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,17 +21,9 @@ services:
       dockerfile: Api/Dockerfile
     container_name: notasapi_api
     environment:
-      HTTP_PORTS: "8080"
-      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_URLS: "http://+:8080"
       ConnectionStrings__Default: "Host=db;Port=5432;Database=notasdb;Username=notasuser;Password=notassecret"
-      ASPNETCORE_ENVIRONMENT: Production
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8080:8080"
-    healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:8080/health" ]
-      interval: 10s
-      timeout: 3s
-      retries: 5
+    ports: ["8080:8080"]
