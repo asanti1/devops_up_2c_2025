@@ -19,7 +19,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<NoteContext>(options =>
 {
     var connString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-        $"Host={Environment.GetEnvironmentVariable("DB_HOST") ?? "db"};" +
+        $"Host={Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost"};" +
         $"Port={Environment.GetEnvironmentVariable("DB_PORT") ?? "5432"};" +
         $"Database={Environment.GetEnvironmentVariable("DB_NAME") ?? "notasdb"};" +
         $"Username={Environment.GetEnvironmentVariable("DB_USER") ?? "notasuser"};" +
