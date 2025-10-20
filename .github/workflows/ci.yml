@@ -79,3 +79,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Trigger Render redeploy
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "🚀 Triggering Render redeploy..."
+          curl -s -X POST "$RENDER_DEPLOY_HOOK"
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
