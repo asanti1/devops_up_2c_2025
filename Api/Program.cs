@@ -9,11 +9,23 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}"); 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<NoteContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+///builder.Services.AddDbContext<NoteContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
+builder.Services.AddDbContext<NoteContext>(options =>
+{
+    var connString = builder.Configuration.GetConnectionString("DefaultConnection") ??
+        $"Host={Environment.GetEnvironmentVariable("DB_HOST") ?? "db"};" +
+        $"Port={Environment.GetEnvironmentVariable("DB_PORT") ?? "5432"};" +
+        $"Database={Environment.GetEnvironmentVariable("DB_NAME") ?? "notasdb"};" +
+        $"Username={Environment.GetEnvironmentVariable("DB_USER") ?? "notasuser"};" +
+        $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "notassecret"};";
+    options.UseNpgsql(connString);
+});
 
 builder.Services.AddHealthChecks().AddDbContextCheck<NoteContext>("db"); ;
 
