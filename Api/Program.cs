@@ -6,15 +6,15 @@ using Api.Service;
 using Api.Service.Interface;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+using Serilog.Sinks.Datadog.Logs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}"); 
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-
-///builder.Services.AddDbContext<NoteContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddDbContext<NoteContext>(options =>
 {
@@ -39,6 +39,24 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>(
         x.GetRequiredService<INoteRepository>()
         ));
 
+var ddApiKey = builder.Configuration["DATADOG_API_KEY"];
+
+if (!string.IsNullOrEmpty(ddApiKey))
+{
+    Log.Logger = new LoggerConfiguration()
+        .MinimumLevel.Information()
+        .WriteTo.DatadogLogs(
+            apiKey: ddApiKey,
+            service: "notasapi",
+            source: "csharp",
+            host: "render",
+            configuration: new DatadogConfiguration(
+                url: "https://http-intake.logs.datadoghq.com"))
+        .CreateLogger();
+    builder.Host.UseSerilog();
+}
+
+
 
 var app = builder.Build();
 
@@ -53,6 +71,9 @@ if (args.Contains("--migrate-only"))
     await db.Database.MigrateAsync();
     return;
 }
+
+
+
 
 
 using (var scope = app.Services.CreateScope())
