@@ -20,7 +20,7 @@ builder.Services.AddHealthChecks().AddDbContextCheck<NoteContext>("db"); ;
 
 builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy())
-    .AddDbContextCheck<NoteContext>("db");
+    .AddDbContextCheck<NoteContext>("db-context");
 
 
 
