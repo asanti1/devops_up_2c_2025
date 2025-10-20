@@ -4,6 +4,7 @@ on:
 #para push y pull request
   push:
     branches: ["**"]
+    tags: ["v*"]
   pull_request:
     branches: ["**"]
 
