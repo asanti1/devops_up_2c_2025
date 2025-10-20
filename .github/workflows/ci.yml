@@ -21,6 +21,10 @@ jobs:
           dotnet-version: 9.0.x
           #reusa cache de los NuGet
           cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            **/global.json
+            **/nuget.config
 
       - name: Restore
         run: dotnet restore NotasApi.sln
