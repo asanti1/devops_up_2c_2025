@@ -83,6 +83,6 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           echo "🚀 Triggering Render redeploy..."
-          curl -s -X POST "$RENDER_DEPLOY_HOOK"
+          curl -X GET "$RENDER_DEPLOY_HOOK"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
