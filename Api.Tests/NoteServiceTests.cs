@@ -62,6 +62,7 @@ public class NoteServiceTests
         Assert.Equal(2, result.Count);
         Assert.Contains(result, n => n.Titulo == "Primera nota");
 
+        // Verificar que el repo fue consultado 1 vez
         mockRepo.Verify(r => r.GetAllNotes(), Times.Once);
     }
 }
