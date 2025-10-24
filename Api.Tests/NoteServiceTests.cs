@@ -5,6 +5,8 @@ using Api.DTO;
 using Api.Tests.Helpers;
 using Api.Mapping;
 using Xunit;
+using Moq;
+using Api.DAL.Models;
 
 namespace Api.Tests;
 
@@ -33,5 +35,34 @@ public class NoteServiceTests
         var svc = new NoteService(uow, new NoteMappers());
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => svc.BorrarNote(12345));
+    }
+
+    [Fact]
+    public async Task GetAll_ShouldReturnAllNotes()
+    {
+        var mockRepo = new Mock<INoteRepository>();
+        mockRepo
+            .Setup(r => r.GetAllNotes())
+            .ReturnsAsync(new List<Note>
+            {
+                new Note { Id = 1, Titulo = "Primera nota", Contenido = "Contenido 1" },
+                new Note { Id = 2, Titulo = "Segunda nota", Contenido = "Contenido 2" }
+            });
+
+        var mockUow = new Mock<IUnitOfWork>();
+
+        mockUow.Setup(u => u.NoteRepository).Returns(mockRepo.Object);
+
+        var mapper = new NoteMappers();
+        var service = new NoteService(mockUow.Object, mapper);
+
+        var result = await service.GetAllNotes();
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, n => n.Titulo == "Primera nota");
+
+        // Verificar que el repo fue consultado 1 vez
+        mockRepo.Verify(r => r.GetAllNotes(), Times.Once);
     }
 }
