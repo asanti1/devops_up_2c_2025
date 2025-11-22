@@ -7,7 +7,8 @@ using Api.Service.Interface;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using Serilog.Sinks.Datadog.Logs;
+using Sentry;
+using Sentry.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,30 +40,48 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>(
         x.GetRequiredService<INoteRepository>()
         ));
 
-var ddApiKey = builder.Configuration["DATADOG_API_KEY"];
+// --- LOGGING CONFIG ---
 
-if (!string.IsNullOrEmpty(ddApiKey))
+var loggerConfig = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.FromLogContext()
+    .WriteTo.Console(); // Siempre logueamos a consola
+
+
+var sentryDsn = builder.Configuration["SENTRY_DSN"];
+
+// Creamos el logger global de Serilog
+Log.Logger = loggerConfig.CreateLogger();
+
+builder.Host.UseSerilog();
+
+
+if (!string.IsNullOrWhiteSpace(sentryDsn))
 {
-    Log.Logger = new LoggerConfiguration()
-        .MinimumLevel.Information()
-        .WriteTo.DatadogLogs(
-            apiKey: ddApiKey,
-            service: "notasapi",
-            source: "csharp",
-            host: "render",
-            configuration: new DatadogConfiguration(
-                url: "https://http-intake.logs.datadoghq.com"))
-        .CreateLogger();
-    builder.Host.UseSerilog();
+    builder.WebHost.UseSentry(o =>
+    {
+        o.Dsn = sentryDsn;
+        o.Debug = true;
+        o.TracesSampleRate = 0.5;
+    });
 }
-
 
 
 var app = builder.Build();
 
+app.UseSentryTracing();
+
 app.MapHealthChecks("/health");
 
+if (app.Environment.IsDevelopment())
+{
+    SentrySdk.CaptureMessage("Hello Sentry from NotasApi (dev startup)");
 
+    app.MapGet("/sentry-test", () =>
+    {
+        throw new Exception("Test exception for Sentry (dev only)");
+    });
+}
 
 if (args.Contains("--migrate-only"))
 {
@@ -72,10 +91,6 @@ if (args.Contains("--migrate-only"))
     return;
 }
 
-
-
-
-
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<NoteContext>();
@@ -83,6 +98,7 @@ using (var scope = app.Services.CreateScope())
     {
         var can = await db.Database.CanConnectAsync();
         app.Logger.LogInformation("DB CanConnect: {can}", can);
+        
     }
     catch (Exception ex)
     {
@@ -91,9 +107,20 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-app.UseAuthorization();
-
 app.MapControllers();
 app.MapOpenApi();
 
-app.Run();
+try
+{
+    Log.Information("Starting up");
+    app.Run();
+
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application start-up failed");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

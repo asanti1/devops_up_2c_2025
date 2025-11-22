@@ -1,7 +1,6 @@
 name: ci
 
 on:
-#para push y pull request
   push:
     branches: ["**"]
     tags: ["v*"]
@@ -9,7 +8,7 @@ on:
     branches: ["**"]
 
 jobs:
-  # build y test ---
+  # Job 1: build + test
   build-and-test:
     runs-on: ubuntu-latest
     steps:
@@ -20,7 +19,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
-          #reusa cache de los NuGet
           cache: true
           cache-dependency-path: |
             **/*.csproj
@@ -51,13 +49,20 @@ jobs:
             **/TestResults/coverage/coverage.cobertura.xml
           if-no-files-found: ignore
 
-  #Job 2: build y push docker
-  docker:
+  # Job 2: build + push Docker + deploy a VPS
+  docker-and-deploy:
     needs: build-and-test
+    # Solo deploy en master o tags (no en cualquier branch)
     if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: asantinaque/up_2c_devops_notasapi
+      IMAGE_TAG: ${{ github.sha }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -65,24 +70,32 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Si querés seguir usando metadata (labels): opcional.
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
 
-      - name: Build and push
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Api/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
-      - name: Trigger Render redeploy
-        if: github.ref == 'refs/heads/master'
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
-        run: |
-          curl "$RENDER_DEPLOY_HOOK"
-        
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          script: |
+            cd /srv/apps/notasapi
+            IMAGE_TAG=${{ env.IMAGE_TAG }} docker compose pull
+            IMAGE_TAG=${{ env.IMAGE_TAG }} docker compose up -d

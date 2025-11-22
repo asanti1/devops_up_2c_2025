@@ -1,0 +1,42 @@
+services:
+  api:
+    image: asantinaque/up_2c_devops_notasapi:latest
+    container_name: notasapi_api
+    env_file:
+      - .env.api
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - proxy
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notasapi.rule=Host(`example`)"
+      - "traefik.http.routers.notasapi.entrypoints=websecure"
+      - "traefik.http.routers.notasapi.tls.certresolver=le"
+      - "traefik.http.routers.notasapi.middlewares=sec-headers"
+      - "traefik.http.services.notasapi.loadbalancer.server.port=8080"
+
+  db:
+    image: postgres:16
+    container_name: notasapi_db
+    env_file:
+      - .env.db
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+networks:
+  proxy:
+    external: true
+  internal:
+    driver: bridge

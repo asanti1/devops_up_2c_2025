@@ -39,6 +39,9 @@ docker/*.env
 **/volumes/
 **/bin/
 **/obj/
+*.pid
+/data
+/docker-data
 
 # === OS ===
 .DS_Store
@@ -68,4 +71,5 @@ data/postgres
 # === Secrets ===
 appsettings.Development.json
 .env
+.env.*
 docker/env.example
